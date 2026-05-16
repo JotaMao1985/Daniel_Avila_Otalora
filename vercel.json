@@ -15,9 +15,5 @@
       "dest": "backend/app/main.py"
     }
   ],
-  "env": {
-    "PYTHONPATH": "/var/task/backend"
-  },
-  "envPrefix": "",
   "regions": ["iad1"]
 }
