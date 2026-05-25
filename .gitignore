@@ -1,107 +1,65 @@
-# Variables de entorno (API keys)
-.env
-.env.local
-.env.*.local
+# =============================================================================
+# .gitignore — RISKLABUSTA
+# =============================================================================
 
-# Datos crudos descargados
-data/raw/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Entorno virtual
+# Entornos virtuales locales
 venv/
 .venv/
 env/
+ENV/
+lib/
+lib64/
+bin/
+include/
+share/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Streamlit
-.streamlit/secrets.toml
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# LaTeX / Documentation
-*.tex
-*.log
-*.aux
-*.synctex.gz
-
-# R
-.Rhistory
-.Rproj.user/
-*.Rproj
-
-# IDE settings
-*.swp
-*.swo
-*~
-
-# OS cache
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Coverage reports
-htmlcov/
-.coverage
+# Caché de compilación de Python (Bytecode)
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 .pytest_cache/
-coverage.xml
+.mypy_cache/
+.ruff_cache/
 
-# Built files
-dist/
-build/
-*.egg-info/
-
-# ----------------------------
-# Documentación y guías (excluir archivos grandes/privados)
-# ----------------------------
-# Archivos de documentación generados o privados
-CHANGELOG_DOCUMENTACION.md
-CHANGELOG.md
-CONTRIBUTING.md
-cumplimiento_rubrica.html
-documentacion_completa.html
-DOCUMENTACION.html
-GUIA_DE_LECTURA.txt
-README_DOCUMENTACION.md
-RESUMEN_ENTREGA.md
-
-# Guías internas y notas
-GUIA_VERCEL_SUPABASE.md
-INICIO_RAPIDO.md
-CHECKLIST_DEPLOYMENT.md
-CAMBIOS_TECNICOS.md
-
-# Patrones generales para documentación no deseada
-*DOCUMENTACION*
-*GUIA*
-*RESUMEN*
-
-# ----------------------------
-# Bases de datos locales y archivos binarios
-# ----------------------------
-backend/*.db
+# Bases de datos y persistencia SQLite local
 *.db
 *.sqlite
+*.sqlite3
+backend/risklab.db
 
-# Datos procesados y resultados
-data/processed/
+# Configuración y secretos del entorno (Claves de API, etc.)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+!backend/.env.example
 
+# Archivos del sistema operativo y del IDE
+.DS_Store
+.DS_Store?
+**/Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Modelos entrenados y archivos pesados (se generan localmente)
+*.joblib
+*.pkl
+backend/trading_model.joblib
+
+# Temporales de R y Python, datos locales e informes de auditoria scratch
+.Rhistory
+.RData
+.Ruserdata
+scratch/
+data/

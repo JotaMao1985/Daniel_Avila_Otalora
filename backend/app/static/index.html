@@ -575,15 +575,29 @@
         const varData = await api('/var', {}, 'POST', { tickers: rawT, pesos: w, nivel_confianza: 0.95, periodo: per });
         const front = await api('/frontera-eficiente', {}, 'POST', { tickers: rawT, pesos: w, nivel_confianza: 0.95, periodo: per });
 
-        // Fase 2: Endpoints individuales por ticker (secuenciales)
-        ts.innerHTML = "[3/4] Descargando precios, rendimientos e indicadores...";
-        let rends = [], ind = [], precios = [];
-        for (let i = 0; i < rawT.length; i++) {
-          ts.innerHTML = `[3/4] Procesando ${rawT[i]} (${i + 1}/${rawT.length})...`;
-          rends.push(await api(`/rendimientos/${rawT[i]}`, { periodo: per }));
-          ind.push(await api(`/indicadores/${rawT[i]}`, { periodo: per }));
-          precios.push(await api(`/precios/${rawT[i]}`, { periodo: per }));
-        }
+        // Fase 2: Endpoints individuales por ticker (en paralelo para alto rendimiento)
+        ts.innerHTML = "[3/4] Descargando precios, rendimientos e indicadores (en paralelo)...";
+        const promesasTickers = rawT.map(async (ticker, index) => {
+          const [r, idx_data, p] = await Promise.all([
+            api(`/rendimientos/${ticker}`, { periodo: per }),
+            api(`/indicadores/${ticker}`, { periodo: per }),
+            api(`/precios/${ticker}`, { periodo: per })
+          ]);
+          return { index, r, i: idx_data, p };
+        });
+
+        const resultadosTickers = await Promise.all(promesasTickers);
+        
+        // Reordenar para preservar el orden original de los tickers
+        let rends = new Array(rawT.length);
+        let ind = new Array(rawT.length);
+        let precios = new Array(rawT.length);
+        
+        resultadosTickers.forEach(res => {
+          rends[res.index] = res.r;
+          ind[res.index] = res.i;
+          precios[res.index] = res.p;
+        });
 
         // Fase 3: Alertas + GARCH + Benchmark
         ts.innerHTML = "[4/5] Generando señales técnicas y datos de benchmark...";
@@ -1991,11 +2005,10 @@
       regCh('c-fixed', {
         type: 'line',
         data: {
-          labels: cTeo.maduraciones.map(m => m.toFixed(1)),
           datasets: [
             { 
               label: 'Modelo Nelson-Siegel', 
-              data: cTeo.tasas.map(t => t * 100), 
+              data: cTeo.maduraciones.map((m, idx) => ({ x: m, y: cTeo.tasas[idx] * 100 })), 
               borderColor: '#22d3ee', 
               borderWidth: 3, 
               pointRadius: 0, 
@@ -2005,7 +2018,7 @@
             },
             { 
               label: 'Puntos Reales (Mercado)', 
-              data: f.puntos_reales.map(pt => ({ x: pt.maduracion.toFixed(1), y: pt.tasa * 100 })), 
+              data: f.puntos_reales.map(pt => ({ x: pt.maduracion, y: pt.tasa * 100 })), 
               type: 'scatter', 
               backgroundColor: '#ef4444', 
               borderColor: '#ffffff',
@@ -2020,9 +2033,11 @@
           plugins: { legend: { display: true, labels: { color: tc } } },
           scales: {
             x: { 
-              ...axBase, 
+              type: 'linear', 
+              position: 'bottom',
               title: { display: true, text: 'Maduración (Años)', color: tc },
-              type: 'category' 
+              ticks: { color: tc, font: { size: 10 } },
+              grid: { color: 'rgba(255,255,255,0.05)' }
             },
             y: { 
               ...axBase, 
@@ -2188,11 +2203,10 @@
         const labels = Object.keys(imp);
         const values = Object.values(imp).map(v => v * 100);
 
-        new Chart(document.createElement('canvas'), {}).destroy(); // Clear hack
-        const ctx = document.createElement('canvas');
-        document.getElementById('ml-imp-cont').appendChild(ctx);
+        // Limpiar el contenedor y crear un canvas con ID para usar regCh
+        document.getElementById('ml-imp-cont').innerHTML = '<canvas id="c-ml-imp"></canvas>';
         
-        new Chart(ctx, {
+        regCh('c-ml-imp', {
           type: 'bar',
           data: {
             labels,

@@ -27,9 +27,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Dependencias del sistema (build-essential para compilar arch/GARCH)
+# Dependencias del sistema (build-essential para compilar arch/GARCH y curl para healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Capa de dependencias Python (se cachea si requirements.txt no cambia)

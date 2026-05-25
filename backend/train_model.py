@@ -96,10 +96,15 @@ def main():
     feature_cols = ["rsi", "macd", "macd_hist", "bb_width", "sma_dist", "returns", "volatility"]
     X_train_final = X_full[feature_cols]
 
-    # Split Temporal (80% entrenamiento, 20% prueba)
-    split = int(len(X_train_final) * 0.8)
-    X_train, X_test = X_train_final.iloc[:split], X_train_final.iloc[split:]
-    y_train, y_test = y_full.iloc[:split], y_full.iloc[split:]
+    # Split Temporal (80% entrenamiento, 20% prueba) - Basado en fechas para evitar fuga de información entre activos
+    fechas_unicas = sorted(list(set(X_train_final.index)))
+    split_idx = int(len(fechas_unicas) * 0.8)
+    fecha_limite = fechas_unicas[split_idx]
+
+    X_train = X_train_final[X_train_final.index < fecha_limite]
+    X_test = X_train_final[X_train_final.index >= fecha_limite]
+    y_train = y_full[y_full.index < fecha_limite]
+    y_test = y_full[y_full.index >= fecha_limite]
 
     print(f"Entrenando Random Forest con {len(X_train)} muestras...")
     model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42, class_weight='balanced')

@@ -12,23 +12,31 @@ from src.api_client import obtener_rf_actual
 
 
 def calcular_beta(rendimientos_activo: pd.Series,
-                  rendimientos_indice: pd.Series) -> dict:
+                  rendimientos_indice: pd.Series,
+                  rf: float = None) -> dict:
     """
-    Calcula Beta del activo por regresión OLS:
-        R_activo = alpha + beta * R_indice + epsilon
+    Calcula Beta del activo por regresión OLS sobre excesos de retorno:
+        (R_activo - R_f) = alpha + beta * (R_indice - R_f) + epsilon
 
     Returns
     -------
     dict con beta, alpha, R², p-valor, error estándar.
     """
+    if rf is None:
+        rf = obtener_rf_actual()
+    rf_diario = rf / 252
+
     # Alinear índices
     datos = pd.DataFrame({
         "activo": rendimientos_activo,
         "indice": rendimientos_indice
     }).dropna()
 
+    activo_exceso = datos["activo"] - rf_diario
+    indice_exceso = datos["indice"] - rf_diario
+
     slope, intercept, r_value, p_value, std_err = stats.linregress(
-        datos["indice"], datos["activo"]
+        indice_exceso, activo_exceso
     )
 
     return {
@@ -102,7 +110,7 @@ def tabla_capm(rendimientos: pd.DataFrame,
 
     resultados = []
     for col in rendimientos.columns:
-        beta_info = calcular_beta(rendimientos[col], rendimientos_indice)
+        beta_info = calcular_beta(rendimientos[col], rendimientos_indice, rf=rf)
         capm_info = calcular_capm(
             beta_info["beta"], rf=rf,
             rendimiento_mercado=r_mercado_anual

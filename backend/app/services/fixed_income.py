@@ -58,10 +58,25 @@ def ajustar_nelson_siegel(maduraciones: list[float], tasas_reales: list[float]) 
     
     p0 = [b0_init, b1_init, b2_init, tau_init]
     
+    # Determinar si las tasas vienen en porcentaje (ej: 5.1%) o decimal (ej: 0.051)
+    es_porcentaje = any(val > 1.0 for val in y)
+    max_rate = 20.0 if es_porcentaje else 0.20
+    min_rate_diff = -20.0 if es_porcentaje else -0.20
+    max_rate_diff = 20.0 if es_porcentaje else 0.20
+    
+    # Límites numéricos:
+    # beta0 (largo plazo) >= 0.0 (tasas no negativas)
+    # tau (decaimiento) entre 0.1 y 15.0 años para evitar divisiones por cero e infs exponenciales.
+    bounds = (
+        [0.0, min_rate_diff, min_rate_diff, 0.1],   # Límites inferiores
+        [max_rate, max_rate_diff, max_rate_diff, 15.0]  # Límites superiores
+    )
+    
     try:
         # curve_fit optimiza minimizando el error cuadrático medio
         # maxfev incrementado para asegurar convergencia
-        popt, pcov = curve_fit(ecuacion_nelson_siegel, m, y, p0=p0, maxfev=10000)
+        # bounds previene desbordamientos exponenciales si tau se vuelve negativo o muy pequeño
+        popt, pcov = curve_fit(ecuacion_nelson_siegel, m, y, p0=p0, bounds=bounds, maxfev=10000)
         beta0, beta1, beta2, tau = popt
         
         # Generar la curva ajustada (interpolar desde 0.1 hasta 30 años con 100 puntos)
@@ -82,7 +97,7 @@ def ajustar_nelson_siegel(maduraciones: list[float], tasas_reales: list[float]) 
             }
         }
     except Exception as e:
-        return {"exito": False, "error": str(e)}
+        return {"exito": False, "error": f"Fallo de optimización Nelson-Siegel: {str(e)}"}
 
 
 def obtener_curva_tesoro() -> dict:

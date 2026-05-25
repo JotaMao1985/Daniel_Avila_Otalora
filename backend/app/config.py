@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
+        env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",  # Ignora variables extra en .env sin error
     )
@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     BENCHMARK_TICKER: str = "^GSPC"  # S&P 500
 
     # ── Base de Datos ─────────────────────────────────────
-    # Para desarrollo: SQLite
-    # Para producción: PostgreSQL (Supabase)
-    DATABASE_URL: str = "sqlite:///./risklab.db"
+    # SQLite embebido (cero configuración). Para producción,
+    # cambiar a "postgresql://user:pass@host/db" sin tocar el ORM.
+    DATABASE_URL: str = f"sqlite:///{os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'risklab.db')}"
 
     # Serie FRED para tasa libre de riesgo
     FRED_RF_SERIE: str = "DGS3MO"   # T-Bill 3 meses

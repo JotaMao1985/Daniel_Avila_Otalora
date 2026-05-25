@@ -121,10 +121,13 @@ app = FastAPI(
     ],
 )
 
+# ── Instancia settings global para inicializaciones de la app
+settings = get_settings()
+
 # ── CORS — permite que Streamlit (otro puerto) consuma la API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

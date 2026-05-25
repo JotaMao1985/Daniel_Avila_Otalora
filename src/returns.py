@@ -213,39 +213,48 @@ def calcular_stats_boxplot(rendimientos: pd.Series) -> dict:
 def test_kupiec(excepciones: int, n_observaciones: int, nivel_confianza: float) -> dict:
     """
     Realiza el Test de Kupiec (Proportion of Failures - POF) para backtesting de VaR.
-    
-    H0: El modelo de VaR es correcto (la tasa de fallos observada es igual a la esperada).
-    Si p-valor < 0.05 → se rechaza el modelo.
+    Soporta matemáticamente los límites de 0 y N excepciones de forma estable
+    y aplica el rigor de la prueba de dos colas.
     """
     p = 1 - nivel_confianza  # Probabilidad de excepción esperada
     n = n_observaciones
     x = excepciones
     
-    if x == 0:
-        # Si no hay excepciones, el modelo es conservador/bueno
-        return {"estadistico": 0.0, "p_valor": 1.0, "valido": True, "interpretacion": "Modelo válido (conservador)."}
-
     # Tasa observada
     p_hat = x / n
     
-    # Likelihood Ratio (LR)
+    # Manejo de límites matemáticos para evitar 0 * log(0) -> NaN
+    # Usamos el límite matemático: lim_{x->0} x * ln(x) = 0
+    term_1_null = (n - x) == 0
+    term_2_null = x == 0
+    
+    log_1_minus_p_hat = 0.0 if term_1_null else np.log(1 - p_hat)
+    log_p_hat = 0.0 if term_2_null else np.log(p_hat)
+    
     try:
+        # Likelihood Ratio (LR)
         lr = -2 * (
             (n - x) * np.log(1 - p) + x * np.log(p) -
-            (n - x) * np.log(1 - p_hat) - x * np.log(p_hat)
+            (n - x) * log_1_minus_p_hat - x * log_p_hat
         )
+        
         # El estadístico LR sigue una chi-cuadrado con 1 grado de libertad
-        p_value = 1 - stats.chi2.cdf(lr, df=1)
+        p_value = 1.0 - stats.chi2.cdf(lr, df=1)
     except Exception:
-        return {"estadistico": 0.0, "p_valor": 0.01, "valido": False, "interpretacion": "Error en cálculo de Kupiec."}
+        return {
+            "estadistico": 0.0, 
+            "p_valor": 0.0, 
+            "valido": False, 
+            "interpretacion": "Error numérico en el cálculo del test de Kupiec."
+        }
 
     return {
         "estadistico": round(float(lr), 4),
         "p_valor": round(float(p_value), 6),
         "valido": bool(p_value > 0.05),
         "interpretacion": (
-            "Modelo Válido: No se rechaza la precisión del VaR."
+            "Modelo Válido: No se rechaza la precisión del VaR (excepciones dentro de límites estadísticos)."
             if p_value > 0.05 else
-            "Modelo Inválido: La tasa de excepciones difiere significativamente de la esperada."
+            "Modelo Inválido: La tasa de excepciones difiere significativamente de la esperada (p-valor < 0.05)."
         )
     }

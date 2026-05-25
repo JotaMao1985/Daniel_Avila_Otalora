@@ -69,9 +69,10 @@ def obtener_panel_macro() -> dict:
 
 def rendimiento_acumulado_base100(rendimientos: pd.Series) -> pd.Series:
     """
-    Calcula el rendimiento acumulado normalizado a base 100.
+    Calcula el rendimiento acumulado normalizado a base 100 para rendimientos logarítmicos.
+    V_t = 100 * exp( sum_{i=1}^t r_i )
     """
-    return (1 + rendimientos).cumprod() * 100
+    return np.exp(rendimientos.cumsum()) * 100
 
 
 def comparar_vs_benchmark(rendimientos_portafolio: pd.Series,
@@ -144,12 +145,12 @@ def information_ratio(rendimientos_portafolio: pd.Series,
 
 def max_drawdown(rendimientos: pd.Series) -> float:
     """
-    Máximo Drawdown: mayor caída desde un pico hasta un valle.
+    Máximo Drawdown compatible con rendimientos logarítmicos.
     """
-    acumulado = (1 + rendimientos).cumprod()
+    acumulado = np.exp(rendimientos.cumsum())
     pico = acumulado.cummax()
     drawdown = (acumulado - pico) / pico
-    return drawdown.min()
+    return float(drawdown.min())
 
 
 def tabla_desempeno(rendimientos_portafolio: pd.Series,
@@ -170,7 +171,7 @@ def tabla_desempeno(rendimientos_portafolio: pd.Series,
         vol_anual = r.std() * np.sqrt(252)
         sharpe = (ret_anual - rf) / vol_anual if vol_anual > 0 else 0
         mdd = max_drawdown(r)
-        ret_acum = (1 + r).prod() - 1
+        ret_acum = np.exp(r.sum()) - 1
 
         return {
             "": nombre,
