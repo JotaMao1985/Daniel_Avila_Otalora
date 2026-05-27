@@ -73,6 +73,69 @@ El proyecto incluye un script automatizado que gestiona el entorno virtual y lan
 
 ---
 
+## 🐳 Despliegue con Docker
+
+### Prerrequisitos
+- Docker Desktop instalado ([descargar aquí](https://www.docker.com/products/docker-desktop/))
+- Archivo `.env` configurado en `backend/` con tu `FRED_API_KEY`
+
+### Opción 1: Docker Compose (Recomendado)
+
+```bash
+# Desde la raíz del proyecto
+docker-compose up -d
+
+# Ver logs en tiempo real
+docker-compose logs -f
+
+# Detener servicios
+docker-compose down
+```
+
+### Opción 2: Docker directo
+
+```bash
+# Construir la imagen
+cd backend
+docker build -t risk-meter-dashboard .
+
+# Ejecutar el contenedor
+docker run -d \
+  --name risk_meter_backend \
+  -p 8000:8000 \
+  --env-file .env \
+  risk-meter-dashboard
+```
+
+### Acceso local
+- **Dashboard:** http://localhost:8000
+- **API Docs (Swagger):** http://localhost:8000/docs
+- **Health Check:** http://localhost:8000/health
+
+---
+
+## ☁️ Despliegue en Producción
+
+### Backend + Frontend en Render
+
+El proyecto está desplegado en Render (backend FastAPI + frontend HTML integrados):
+
+**🔗 URL de producción:** https://risk-meter-dashboard.onrender.com
+
+**Configuración en Render:**
+- **Root Directory:** `backend`
+- **Environment:** Docker
+- **Variables de entorno requeridas:**
+  - `FRED_API_KEY`: Tu clave de API de FRED
+
+**Nota:** El plan gratuito de Render duerme el servicio tras 15 min de inactividad. La primera request puede tardar ~30s en responder.
+
+### Streamlit Community Cloud
+
+**⚠️ No aplica:** Este proyecto usa un frontend HTML/JS servido por FastAPI, no Streamlit. Todo el stack (API + UI) está unificado en el servicio de Render.
+
+---
+
 ## 📄 Licencia
 Este proyecto está bajo la licencia **MIT**. Eres libre de usarlo y modificarlo con la debida atribución.
 
